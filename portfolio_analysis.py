@@ -72,6 +72,8 @@ def get_current_risk_free_rate(timeframe = '10 yr'):
 
 def get_historical_risk_free():
 
+    return None
+    
 def get_fama_french(factors:int = 5,frequency="monthly")->pd.DataFrame:
 
     if factors == 5:
