@@ -71,6 +71,7 @@ def get_current_risk_free_rate(timeframe = '10 yr'):
     return most_recent_row[timeframe]/100
 
 def get_historical_risk_free():
+    
 
     return None
     
