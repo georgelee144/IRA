@@ -1,4 +1,4 @@
-.ipynb
-.code-workspace
-.csv
+*.ipynb
+*.code-workspace
+*.csv
 */
