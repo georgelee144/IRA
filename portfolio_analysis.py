@@ -5,6 +5,7 @@ import io
 
 import requests
 import statsmodels.api as sm
+from statsmodels.regression.rolling import RollingOLS
 
 
 def get_ln_return(price_t, price_0, t=1):
@@ -169,7 +170,7 @@ def get_fama_french(factors: int = 5, frequency: str = "monthly") -> pd.DataFram
             f"factors, {factors}, is not a vaild choice. Needs to be either 3 or 5")
 
 
-def fama_french_regression(df_security, df_benchmark, factors, frequency, rolling=None):
+def fama_french_regression(df_security, df_benchmark=None, factors=5, frequency="monthly", rolling_window=None):
 
     fama_french_5_factors = ['Mkt-RF', 'SMB', 'HML', 'RMW', 'CMA']  # and RF
     fama_french_3_factors = ['Mkt-RF', 'SMB', 'HML']  # and RF
@@ -177,14 +178,27 @@ def fama_french_regression(df_security, df_benchmark, factors, frequency, rollin
     if df_benchmark is None:
         df_benchmark = get_fama_french(factors=factors, frequency=frequency)
 
-    df_full = df_security.merge(get_fama_french(), how='left', on=["Date"])
+    df_full = df_security.merge(df_benchmark, how='left', on=["Date"])
+
     df_full['Security-RF'] = df_full['return'] - df_full['RF']
 
     df_full.dropna(inplace=True)
 
-    if rolling:
+    if rolling_window:
+        if factors == 5:
+            mod = RollingOLS(df_full['Security-RF'],  df_full[fama_french_5_factors], window=rolling_window,)
 
-        pass
+            ols_model = mod.fit()
+
+            return df_full, ols_model
+
+        elif factors == 3:
+
+            mod = RollingOLS(df_full['Security-RF'],  df_full[fama_french_3_factors], window=rolling_window)
+
+            ols_model = mod.fit()
+
+            return df_full, pd.concat([df_full,ols_model])
 
     else:
         if factors == 5:
@@ -204,7 +218,7 @@ def fama_french_regression(df_security, df_benchmark, factors, frequency, rollin
 
             return df_full, ols_model
 
-    return df_full,
+    return df_full
 
 
 def sharpe_ratio(**kwargs):
@@ -227,7 +241,6 @@ def sharpe_ratio(**kwargs):
     variance = kwargs.get("period_variance", np.var(returns, ddof=ddof))
     stdev = kwargs.get("period_stdev", np.sqrt(variance))
 
-    print(period_return, risk_free_rate, stdev)
     sharpe_ratio = (period_return - risk_free_rate) / stdev
 
     return sharpe_ratio
